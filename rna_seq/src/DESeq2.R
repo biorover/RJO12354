@@ -5,9 +5,12 @@
 #Sean McKenzie, modified from script by Jessica Randall
 
 #Loads required packages and sets enviroment variables
-pacman::p_load("here", "janitor", "tidyverse", "DESeq2", "vsn",
-               "pheatmap", "EnhancedVolcano", 
+pacman::p_load("here", "janitor", "tidyverse", "assertr", 
+               "DESeq2", "vsn", "pheatmap", "EnhancedVolcano", 
                "apeglm")
+
+# links to documentation for here, janitor, and tidyverse 
+#   dplyr, ggplot2 and readr are all in the tidyverse package
 
 theme_set(theme_minimal())
 
@@ -29,8 +32,7 @@ files <- list(
   
 )
 
-
-#Reads in count data and sets column names (column name settings will likely need to be adjusted ba)
+#Reads in count data and set column names
 
 countdata <- as.data.frame(read.table(files$counts, sep = "\t", header = TRUE, row.names="Geneid")) %>%
   clean_names() %>%
@@ -41,26 +43,48 @@ names(countdata) <- c("rjo10", "rjo11", "rjo12", "rjo13", "rjo14", "rjo15",
                       "rjo16", "rjo17", "rjo18", "rjo19", "rjo02", "rjo03", 
                       "rjo05", "rjo6", "rj07", "rjo8", "rjo09")
 
-sample_cols <- colnames(countdata)[grep("Aligned.bam",colnames(countdata))]
-countdata <- countdata[,sample_cols]
-sample_cols <- sub("_trim.*","",sub(".*star.","",sample_cols))
-colnames(countdata) <- sample_cols
+sample_cols <- names(countdata)
 
-sampledata <- read.table(files$sampledata,sep=",",header=TRUE,row.names = "SampleID")
-sampledata$Prenatal_exposure <- as.factor(sampledata$Prenatal_exposure)
-sampledata$animalID <- rownames(sampledata)
+# there's a nifty function called gsub that works similarly to sub too, 
+# I usually use it within a mutate statement to make a new variable  in a df
+# sample_cols <- sub("_trim.*","",sub(".*star.","",sample_cols))
 
+sampledata <- as.data.frame(read_csv(files$sampledata, col_names =TRUE)) %>%
+  clean_names()
+
+# we need to create sampledata before we can give it rownames
+
+row.names(sampledata) <- c("rjo02", "rjo03", "rjo05", "rjo6", "rj07", "rjo8",
+                           "rjo09", "rjo10", "rjo11", "rjo12", "rjo13", "rjo14",
+                           "rjo15", "rjo16", "rjo17", "rjo18", "rjo19")
+sampledata <- sampledata %>%
+  clean_names() %>%
+  mutate(prenat_exp = as.factor(prenatal_exposure),
+         animal_id = as.character(rownames(sampledata)))
+
+row.names(sampledata) <- sampledata$animal_id
+
+# put count data in same order as sample data
 countdata <- countdata[,rownames(sampledata)]
 
-stopifnot(rownames(sampledata) %in% colnames(countdata))
+# changed stopifnot to a verify statement within assertr to stop the program 
+# if this is not true
+
+sampledata <- sampledata %>% 
+  verify(rownames(sampledata) %in% colnames(countdata))
 
 dds <- DESeqDataSetFromMatrix(countData = countdata,
                               colData = sampledata,
-                              design = ~ Prenatal_exposure)
-dds$Prenatal_exposure <- relevel(dds$Prenatal_exposure, ref = "Control")
+                              design = ~ prenat_exp)
+
+dds$prenat_exp <- relevel(dds$prenat_exp, ref = "Control")
+
 #### exploratory PCA ###
 # perform variance stabilizing transformation for PCA and Heatmaps
 vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
+
+# love that you did your own PCA, it's much more fun to customize it than
+# use DESeq's function
 
 # calculate the variance for each gene
 rv <- rowVars(assay(vsd))
@@ -76,7 +100,7 @@ percentVar <- pca$sdev^2 / sum( pca$sdev^2 )
 
 # assembly the data for each plot
 d_group <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2], 
-                      group=sampledata$Prenatal_exposure, 
+                      group=sampledata$prenat_exp, 
                       name=colnames(vsd))
 
 # look at pca plot overall
@@ -87,7 +111,7 @@ d_group <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2],
     ylab(paste0("PC2: ",round(percentVar[2] * 100),"% variance")) +
     scale_color_manual(values=c("#2c7bb6", "#b2182b")))
 
-pca1_data = plotPCA(vsd, intgroup=c("Prenatal_exposure"), returnData = TRUE)
+pca1_data = plotPCA(vsd, intgroup=c("prenat_exp"), returnData = TRUE)
 
 #export PCA
 pca_all <- png(files$pca, width=600, height=500)
@@ -103,17 +127,47 @@ dev.off()
 vsd_df <-as.data.frame(assay(vsd)) %>%
   mutate(ID = as.factor(row.names(vsd)))
 
+#FIXME: add unit test
+
 # export vst transformed count data 
 write_excel_csv(vsd_df, files$vstcounts)
 
 ### analysis ###
-dds <- DESeq(dds)
-res <- results(dds, name="Prenatal_exposure_Butyrate_vs_Control",
-               alpha=0.05)
+# renames dds to dds_obj just because it makes me uneasy to use the same name
+# for a new object, easy to use the wrong one by accident 
+
+dds_obj <- DESeq(dds)
+
+res <- results(dds_obj, name="prenat_exp_Butyrate_vs_Control", alpha=0.05)
+
 summary(res)
 
-LFC_dds <-as.data.frame(lfcShrink(dds, 
-                                  coef="Prenatal_exposure_Butyrate_vs_Control", 
+# results with FDR < 0.05 #
+
+# out of 20626 with nonzero total read count
+# adjusted p-value < 0.05
+# LFC > 0 (up)       : 11, 0.053%
+# LFC < 0 (down)     : 26, 0.13%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 3189, 15%
+# (mean count < 2)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+# results with FDR < 0.1 #
+
+# out of 20626 with nonzero total read count
+# adjusted p-value < 0.1
+# LFC > 0 (up)       : 26, 0.13%
+# LFC < 0 (down)     : 39, 0.19%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 3585, 17%
+# (mean count < 4)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+LFC_dds <-as.data.frame(lfcShrink(dds_obj, 
+                                  coef="prenat_exp_Butyrate_vs_Control", 
                                   type = "apeglm", svalue = TRUE)) %>%
   arrange(log2FoldChange)
 
@@ -122,15 +176,16 @@ res_df <- as.data.frame(res) %>%
   arrange(log2FoldChange) %>%
   mutate(svals = LFC_dds$svalue) %>%
   arrange(padj)
-row.names(res_df) <- res_df$ID
 
+row.names(res_df) <- res_df$ID
 
 topGene <- rownames(res)[which.min(res$pvalue)]
 
 # see response in aggregate
-cp_agg <- plotCounts(dds, gene = topGene, intgroup=c("Prenatal_exposure", "animalID"), 
+cp_agg <- plotCounts(dds_obj, gene = topGene, intgroup=c("prenat_exp", "animal_id"), 
                      returnData = TRUE)
-ggplot(cp_agg, aes(x = Prenatal_exposure, y = count, fill = Prenatal_exposure)) +
+cp_agg %>%
+  ggplot(aes(x = prenat_exp, y = count, fill = prenat_exp)) +
   scale_y_log10() + 
   geom_dotplot(binaxis='y', stackdir='center') +
   ggtitle(paste("Normalized counts of expression of",topGene)) +
@@ -138,7 +193,7 @@ ggplot(cp_agg, aes(x = Prenatal_exposure, y = count, fill = Prenatal_exposure)) 
 
 #export
 cp1 <- png(files$countplot, width=600, height=400)
-ggplot(cp_agg, aes(x = Prenatal_exposure, y = count, fill = Prenatal_exposure, color = Prenatal_exposure)) +
+ggplot(cp_agg, aes(x = prenat_exp, y = count, fill = prenat_exp, color = prenat_exp)) +
   scale_y_log10() + 
   geom_dotplot(binaxis='y', stackdir='center') +
   ggtitle(ggtitle(paste("Normalized counts of expression of",topGene))) +
@@ -147,20 +202,30 @@ ggplot(cp_agg, aes(x = Prenatal_exposure, y = count, fill = Prenatal_exposure, c
 dev.off()
 
 # extract and export mean normalized counts
-norm_counts <- as.data.frame(counts(dds, normalized = TRUE))%>%
-  mutate (ID = row.names(counts(dds)))
-write_excel_csv(norm_counts, files$meannormcounts)
+norm_counts <- as.data.frame(counts(dds_obj, normalized = TRUE)) %>%
+  mutate(ID = row.names(counts(dds_obj)))
 
-full_results <- res_df
+# added unit tests to check that the output had the expected dimensions before
+# we export
 
-full_results <- full_results %>%
+norm_counts <- norm_counts %>%
+  verify(ncol(norm_counts) == 18 & nrow(norm_counts) == 24421) %>%
+  write_excel_csv(files$meannormcounts)
+
+# arrange full results file
+
+full_results <- res_df  %>%
   dplyr::select(-ends_with("y")) %>%
   dplyr::select("ID", "baseMean", "log2FoldChange", "lfcSE", 
                 "stat", "pvalue", "padj", "svals") %>%
   arrange(padj)
 
-# export results
-write_excel_csv(full_results, files$comp)
+# added unit tests to check that the output had the expected dimensions before
+# we export
+
+full_results <- full_results %>%
+  verify(ncol(full_results) == 8 & nrow(full_results) == 24421) %>%
+  write_excel_csv(files$comp)
 
 ### heatmap ###
 
@@ -169,7 +234,7 @@ res_heat <- as.data.frame(res)
 select <- order(res_heat$padj, decreasing = FALSE)[1:20]
 
 #select vars of interest
-heat <-as.data.frame(colData(dds)[c("Prenatal_exposure")])
+heat <-as.data.frame(colData(dds_obj)[c("prenat_exp")])
 
 #specify that reference level is on the left
 callback <- function(hc, mat){
@@ -204,7 +269,7 @@ RdBu4 <- c("#92c5de", "#0571b0", "#f4a582", "#ca0020")
                         lab = res_df$ID,
                         x = "log2FoldChange",
                         y = "padj",
-                        xlim = c(-12, 12),
+                        xlim = c(-6, 6),
                         title= NULL,
                         col = RdBu4,
                         subtitle = "Log2 fold-change vs adj. p-value",
@@ -218,7 +283,7 @@ EnhancedVolcano(res_df,
                 lab = res_df$ID,
                 x = "log2FoldChange",
                 y = "padj",
-                xlim = c(-12, 12),
+                xlim = c(-6, 6),
                 title= NULL,
                 col = RdBu4,
                 subtitle = "Log2 fold-change vs adj. p-value",
@@ -227,3 +292,4 @@ EnhancedVolcano(res_df,
                 legendLabels = c("NS", "Log2 fold-change", "adj P-value",
                          "adj P-value & Log2 fold-change"))
 dev.off()
+
