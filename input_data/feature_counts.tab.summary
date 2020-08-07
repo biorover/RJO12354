@@ -1,0 +1,15 @@
+Status	/home/smckenzie/projects/RJO12354/analysis/star/RJO10_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO11_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO12_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO13_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO14_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO15_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO16_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO17_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO18_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO19_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO2_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO3_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO5_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO6_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO7_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO8_trimmo_Aligned.bam	/home/smckenzie/projects/RJO12354/analysis/star/RJO9_trimmo_Aligned.bam
+Assigned	41739302	38523903	38365161	38000561	42728686	42093062	40436696	43138974	39864467	42504832	42007042	43057363	45006619	41016562	42682780	42233001	41107929
+Unassigned_Unmapped	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Read_Type	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Singleton	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Chimera	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Duplicate	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_MultiMapping	8455637	9733291	9156573	10188082	7929349	8769605	8316423	8365591	7625004	10102684	8254217	9649860	8719834	6635633	8985493	7653181	8662337
+Unassigned_Secondary	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_NonSplit	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_NoFeatures	8104697	7793271	7853638	7413115	7354232	7529595	6965166	7679644	6902255	8434263	6982979	6835894	7543255	7385647	6364159	7752682	6823785
+Unassigned_Overlapping_Length	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Ambiguity	797819	737841	693494	861160	864403	948181	918393	824581	811157	1028655	858496	934878	933734	776995	976721	812230	917731
