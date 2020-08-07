@@ -5,7 +5,7 @@
 #Sean McKenzie, modified from script by Jessica Randall
 
 #Loads required packages and sets enviroment variables
-pacman::p_load("here", "tidyverse", "DESeq2", "vsn",
+pacman::p_load("here", "janitor", "tidyverse", "DESeq2", "vsn",
                "pheatmap", "EnhancedVolcano", 
                "apeglm")
 
@@ -31,7 +31,16 @@ files <- list(
 
 
 #Reads in count data and sets column names (column name settings will likely need to be adjusted ba)
-countdata <- read.table(files$counts, sep = "\t", header = TRUE, row.names="Geneid")
+
+countdata <- as.data.frame(read.table(files$counts, sep = "\t", header = TRUE, row.names="Geneid")) %>%
+  clean_names() %>%
+  select(-c(chr, start, end, strand, length))
+
+# change column names to be just sample ids
+names(countdata) <- c("rjo10", "rjo11", "rjo12", "rjo13", "rjo14", "rjo15", 
+                      "rjo16", "rjo17", "rjo18", "rjo19", "rjo02", "rjo03", 
+                      "rjo05", "rjo6", "rj07", "rjo8", "rjo09")
+
 sample_cols <- colnames(countdata)[grep("Aligned.bam",colnames(countdata))]
 countdata <- countdata[,sample_cols]
 sample_cols <- sub("_trim.*","",sub(".*star.","",sample_cols))
