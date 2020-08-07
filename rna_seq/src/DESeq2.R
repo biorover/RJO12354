@@ -2,28 +2,30 @@
 
 #RNA-seq analysis using DESeq2 and a counts table from featureCounts
 #Emory EICC 2020-08-06
-#Sean McKenzie, modified from script by Jessica Randal
+#Sean McKenzie, modified from script by Jessica Randall
 
 #Loads required packages and sets enviroment variables
-pacman::p_load("readr", "dplyr", "knitr", "DESeq2", "vsn", "ggplot2", 
-               "pheatmap", "EnhancedVolcano", "apeglm", "tinytex","ggbeeswarm")
+pacman::p_load("here", "tidyverse", "DESeq2", "vsn",
+               "pheatmap", "EnhancedVolcano", 
+               "apeglm")
+
 theme_set(theme_minimal())
 
 files <- list(
-  counts = file.path("../input_data/feature_counts.tab"),
-  sampledata = file.path("../input_data/Barbian_metadata.csv"),
+  counts = here("RJO12354/rna_seq/input_data/feature_counts.tab"),
+  sampledata = here("RJO12354/rna_seq/input_data/Barbian_metadata.csv"),
   
-  comp = file.path("../output/DEresults.csv"),
-  meannormcounts = file.path("../output/meannormcounts.csv"),
-  vstcounts = file.path("../output/vstcounts.csv"),
+  comp = here("RJO12354/rna_seq/output/DEresults.csv"),
+  meannormcounts = here("RJO12354/rna_seq/output/meannormcounts.csv"),
+  vstcounts = here("RJO12354/rna_seq/output/vstcounts.csv"),
   
-  pca = file.path("../output/graphs/PCA.png"),
-  pca_sex = file.path("../output/graphs/PCA_sex.png"),
-  pca_animal = file.path("../output/graphs/PCA_animal.png"),
-  countplot = file.path("../output/graphs/countsplot.png"),
-  heat = file.path("../output/graphs/heatmap.png"),
-  volc = file.path("../output/graphs/volcanoplot.png"),
-  go = file.path("../output/GOresults.csv")
+  pca = here("RJO12354/rna_seq/output/graphs/PCA.png"),
+  pca_sex = here("RJO12354/rna_seq/output/graphs/PCA_sex.png"),
+  pca_animal = here("RJO12354/rna_seq/output/graphs/PCA_animal.png"),
+  countplot = here("RJO12354/rna_seq/output/graphs/countsplot.png"),
+  heat = here("RJO12354/rna_seq/output/graphs/heatmap.png"),
+  volc = here("RJO12354/rna_seq/output/graphs/volcanoplot.png"),
+  go = here("RJO12354/rna_seq/output/GOresults.csv")
   
 )
 
